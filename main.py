@@ -14,15 +14,15 @@ Bq = gate.g4_units.Bq
 def run_simulation(angle_deg, z_translation_cm, idx):
     sim = gate.Simulation()
 
-    sim.visu = False
+    sim.visu = True
     sim.verbose_level = 'INFO'
 
     # Define world
-    sim.world.size = [2 * m, 2 * m, 2 * m]
+    sim.world.size = [2 * m] * 3
 
     # Add a water volume
     vol = sim.add_volume("Box", "vol")
-    vol.size = [10 * cm, 10 * cm, 10 * cm]
+    vol.size = [5 * cm] * 3
     vol.material = "G4_WATER"
     vol.color = [0, 0.5, 1, 1]
 
@@ -34,17 +34,17 @@ def run_simulation(angle_deg, z_translation_cm, idx):
     # Add a detector volume
     detector = sim.add_volume("Box", "detector")
     detector.material = "G4_Si"
-    detector.size = [20 * cm, 5 * mm, 20 * cm]
+    detector.size = [20 * cm, 1 * mm, 1 * cm]
     detector.translation = [0, -0.5 * m, 0]
 
     # Add a gamma source
     source = sim.add_source("GenericSource", "parallel_source")
     source.particle = "gamma"
-    source.activity = 1e5 * Bq
+    source.activity = 1 * Bq
     source.energy.mono = 60 * keV
     source.position.type = "box"
     source.position.size = [20 * cm, 1 * mm, 1 * mm]
-    source.position.translation = [0, 0.5 * m, z_translation_cm * cm]  # Align with object
+    source.position.translation = [0, 0.5 * m, z_translation_cm * cm]
     source.direction.type = "momentum"
     source.direction.momentum = [0, -1, 0]
 
