@@ -1,95 +1,91 @@
 import numpy as np
 import opengate as gate
 from scipy.spatial.transform import Rotation
-import os
+from pathlib import Path
 
-# Units for convenience
+# Units
 m = gate.g4_units.m
 cm = gate.g4_units.cm
 mm = gate.g4_units.mm
+nm = gate.g4_units.nm
 keV = gate.g4_units.keV
+sec = gate.g4_units.second
 deg = gate.g4_units.deg
 Bq = gate.g4_units.Bq
 
-def run_simulation(angle_deg, z_translation_cm, idx):
+if __name__ == "__main__":
+    # Initialize the simulation
     sim = gate.Simulation()
 
-    sim.visu = True
-    sim.verbose_level = 'INFO'
+    n = 10  # Number of projections
 
-    # Define world
-    sim.world.size = [2 * m] * 3
+    # Simulation settings
+    sim.g4_verbose = False
+    sim.g4_verbose_level = 1
+    sim.visu = False
+    sim.random_engine = "MersenneTwister"
+    sim.random_seed = "auto"
+    sim.number_of_threads = 1  # Single thread for consistency
+    sim.progress_bar = True
+    sim.output_dir = "./output"
+    sim.run_timing_intervals = [[i * sec, (i + 1) * sec] for i in range(n)]
 
-    # Add a water volume
+    # World
+    world = sim.world
+    world.size = [2 * m] * 3
+
+    # Volume
     vol = sim.add_volume("Box", "vol")
-    vol.size = [5 * cm] * 3
+    vol.size = [10 * cm] * 3
     vol.material = "G4_WATER"
     vol.color = [0, 0.5, 1, 1]
 
-    # Apply rotation and translation to the volume
-    rotation_matrix = Rotation.from_euler('z', angle_deg, degrees=True).as_matrix()
-    vol.rotation = rotation_matrix
-    vol.translation = [0, 0, z_translation_cm * cm]
+    # Detector Plane
+    detector_plane = sim.add_volume("Box", "detector_plane")
+    detector_plane.size = [30 * cm, 1 * cm, 30 * cm]
+    detector_plane.material = "G4_Si"
+    detector_plane.translation = [0, -50 * cm, 0]
 
-    # Add a detector volume
-    detector = sim.add_volume("Box", "detector")
-    detector.material = "G4_Si"
-    detector.size = [20 * cm, 1 * mm, 1 * cm]
-    detector.translation = [0, -0.5 * m, 0]
-
-    # Add a gamma source
-    source = sim.add_source("GenericSource", "parallel_source")
+    # Source
+    source = sim.add_source("GenericSource", "source")
     source.particle = "gamma"
-    source.activity = 1 * Bq
     source.energy.mono = 60 * keV
     source.position.type = "box"
-    source.position.size = [20 * cm, 1 * mm, 1 * mm]
-    source.position.translation = [0, 0.5 * m, z_translation_cm * cm]
-    source.direction.type = "momentum"
-    source.direction.momentum = [0, -1, 0]
+    source.position.size = [16 * mm, 16 * mm, 16 * mm]
+    source.position.translation = [0, 50 * cm, 0]  # Positioned opposite the detector
+    source.direction.type = "focused"
+    source.direction.focus_point = [0, 45 * cm, 0]  # Center of the volume
+    source.activity = 1e6 * Bq
 
-    stats_actor = sim.add_actor("SimulationStatisticsActor", "Stats")
-    stats_actor.output_filename = f"output/simulation_stats_{idx}.txt"
+    hc = sim.add_actor('DigitizerHitsCollectionActor', 'Hits')
+    hc.attached_to = detector_plane.name
+    hc.output_filename = 'hits.root'
+    hc.attributes = ['TotalEnergyDeposit', 'KineticEnergy', 'PostPosition', 'RunID', 'ThreadID', 'TrackID']
 
-    # Add actors for digitization and projection
-    hits_actor = sim.add_actor("DigitizerHitsCollectionActor", "Hits")
-    hits_actor.attached_to = detector.name
-    hits_actor.attributes = ['TotalEnergyDeposit', 'PostPosition', 'GlobalTime']
-    hits_actor.output_filename = f'output/hits_{idx}.root'
+    # Projections Actor
+    projections_actor = sim.add_actor("DigitizerProjectionActor", "projections_actor")
+    projections_actor.attached_to = detector_plane.name
+    projections_actor.input_digi_collections = ["Hits"]
+    projections_actor.spacing = [1 * mm, 1 * mm]
+    projections_actor.size = [128, 128]
+    projections_actor.output_filename = "projections.mhd"
 
-    proj_actor = sim.add_actor("DigitizerProjectionActor", "Projection")
-    proj_actor.attached_to = detector.name
-    proj_actor.input_digi_collections = ["Hits"]
-    proj_actor.spacing = [1 * mm, 1 * mm]
-    proj_actor.size = [200, 200]
-    proj_actor.origin_as_image_center = True
-    proj_actor.output_filename = f'output/projections_{idx}.mhd'
+    # Physics
+    sim.physics_manager.physics_list_name = "G4EmStandardPhysics_option1"
+
+    # Define rotation angles for the volume
+    angles = np.linspace(0, 360, n, endpoint=False)
+
+    # Create rotation matrices for dynamic parameterization
+    rotations = [
+        Rotation.from_euler("z", angle, degrees=True).as_matrix() for angle in angles
+    ]
+
+    # Add dynamic parameterization to the volume
+    vol.add_dynamic_parametrisation(rotation=rotations)
+
 
     # Run the simulation
-    print(f"Running simulation {idx}: Rotation {angle_deg} degrees, z-translation {z_translation_cm} cm")
-    sim.run(start_new_process=True)
+    sim.run()
 
-if __name__ == "__main__":
-    # Ensure output directory exists
-    if not os.path.exists('output'):
-        os.makedirs('output')
-
-    # Define rotations
-    angular_step = 2  # degrees per step
-    angles = np.arange(0, 180, angular_step)
-
-    # Define helical translation
-    pitch = 10  # cm (total translation over 360 degrees)
-    num_steps = len(angles)
-    z_step = pitch / (360 / angular_step)  # cm per step
-
-    # Total translation distance
-    start_z = -pitch / 2  # cm
-    z_positions = [start_z + i * z_step for i in range(num_steps)]
-
-    idx = 0
-    for angle_deg, z_translation_cm in zip(angles, z_positions):
-        run_simulation(angle_deg, z_translation_cm, idx)
-        idx += 1
-
-    print("All simulations completed.")
+    print("All projections completed.")

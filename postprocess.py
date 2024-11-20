@@ -1,64 +1,31 @@
-import SimpleITK as sitk
+from skimage.transform import iradon
 import numpy as np
+import SimpleITK as sitk
 import matplotlib.pyplot as plt
 
-# Step 1: Define file paths and angles
-num_projections = 90 # Total number of projections
-file_pattern = "output/projections_{}.mhd"  # File naming pattern
-angles = np.linspace(0, 180, num_projections, endpoint=False)  # Assuming evenly spaced angles
+# Load the projection data
+projection_file = "output/projections.mhd"
+projections = sitk.GetArrayFromImage(sitk.ReadImage(projection_file))
 
-# Step 2: Load all projections
-projections = []
-for i in range(num_projections):
-    file = file_pattern.format(i)
-    image = sitk.ReadImage(file)
-    projection = sitk.GetArrayFromImage(image)[0]  # Assume single slice per projection
-    projections.append(projection)
+# Check projection data shape
+print(f"Projections shape: {projections.shape} (n_projections, detector_height, detector_width)")
 
-# Convert to NumPy array
-projections = np.array(projections)  # Shape: (num_projections, height, width)
-print("Projections shape:", projections.shape)
+# Define the projection angles (theta)
+angles = np.linspace(0, 360, projections.shape[0], endpoint=False)
 
-# Step 3: Construct the sinogram
-height, width = projections.shape[1:]
-sinograms = []
-for row in range(height):  # Create sinograms for all rows
-    sinogram = projections[:, row, :]  # Extract sinogram for the current row
-    sinograms.append(sinogram)
+# Extract a sinogram for a specific row (e.g., center row)
+row_index = projections.shape[1] // 2  # Middle row of the detector
+sinogram = projections[:, row_index, :]  # (n_projections, detector_width)
 
-# Convert to NumPy array
-sinograms = np.array(sinograms)  # Shape: (height, num_projections, width)
-print("Sinograms shape:", sinograms.shape)
+# Save the sinogram (optional)
+np.save("cbct_sinogram.npy", sinogram)
 
-# Step 4: Save sinograms for reconstruction
-np.save("sinogram.npy", sinograms)
-
-# Step 5: Visualize one sinogram (middle row)
-middle_row = sinograms[height // 2]  # Middle row sinogram
-plt.imshow(
-    middle_row.T,
-    cmap="gray",
-    aspect="auto",
-    extent=[angles[0], angles[-1], 0, width],
-)
+# Visualize the sinogram
+plt.figure(figsize=(10, 6))
+plt.imshow(sinogram, cmap="gray", aspect="auto")
 plt.colorbar(label="Intensity")
-plt.title("Sinogram (Middle Row)")
-plt.xlabel("Projection Angle (degrees)")
-plt.ylabel("Detector Position")
-plt.savefig("sinogram_middle_row.png")
-plt.show()
-
-# Step 6: Visualize entire sinogram collapsed over all rows
-collapsed_sinogram = sinograms.mean(axis=0)  # Collapse sinograms over rows
-plt.imshow(
-    collapsed_sinogram.T,
-    cmap="gray",
-    aspect="auto",
-    extent=[angles[0], angles[-1], 0, width],
-)
-plt.colorbar(label="Intensity")
-plt.title("Collapsed Sinogram")
-plt.xlabel("Projection Angle (degrees)")
-plt.ylabel("Detector Position")
-plt.savefig("collapsed_sinogram.png")
+plt.title("CBCT Sinogram")
+plt.xlabel("Detector Elements")
+plt.ylabel("Projection Angle (Degrees)")
+plt.savefig("cbct_sinogram.png")
 plt.show()

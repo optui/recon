@@ -11,12 +11,18 @@ sec = gate.g4_units.second
 deg = gate.g4_units.deg
 Bq = gate.g4_units.Bq
 
+# Number of angles
+n = 180
+
 if __name__ == "__main__":
     sim = gate.Simulation()
 
     # Simulation parameters
     sim.visu = False
-    sim.verbose_level = 'DEBUG'
+    sim.verbose_level = 'INFO'
+    sim.run_timing_intervals = [[i * sec, (i + 1) * sec] for i in range(n)]
+    sim.number_of_threads = 1
+    sim.progress_bar = True
 
     # World
     world = sim.world
@@ -37,8 +43,8 @@ if __name__ == "__main__":
     # Source
     source = sim.add_source("GenericSource", "parallel_source")
     source.particle = "gamma"
-    source.activity = 1e5 * Bq
-    source.energy.mono = 60 * keV
+    source.activity = 1e6 * Bq
+    source.energy.mono = 80 * keV
     source.position.type = "box"
     source.position.size = [20 * cm, 1 * mm, 1 * mm]
     source.position.translation = [0, 0.5 * m, 0]
@@ -60,25 +66,15 @@ if __name__ == "__main__":
     proj_actor.attached_to = detector.name
     proj_actor.input_digi_collections = ["Hits"]
     proj_actor.spacing = [1 * mm, 1 * mm]
-    proj_actor.size = [200, 200]
+    proj_actor.size = [256, 256]
     proj_actor.origin_as_image_center = True
+    proj_actor.output_filename = 'output/projection.mhd'
 
-    # Dynamic Rotation
-    angular_step = 5
-    angles = np.arange(0, 180, angular_step)
-
-    # Compute rotation matrices
+    angles = np.linspace(0, 180, n)  # Rotate from 0° to 180° over n runs
     rotations = [Rotation.from_euler('z', angle, degrees=True).as_matrix() for angle in angles]
 
-    # Simulation timing intervals parameter
-    sim.run_timing_intervals = [[i * sec, (i + 1) * sec] for i in range(len(rotations))]
+    # Apply dynamic rotation to the "vol" volume
+    vol.add_dynamic_parametrisation(rotation=rotations)
 
-    for idx, rotation in enumerate(rotations):
-        # Rotate the volume
-        vol.rotation = rotation
-
-        proj_actor.output_filename = f'output/projections{idx}.mhd'
-
-        # Run for current interval
-        sim.run_timing_intervals = [[idx * sec, (idx + 1) * sec]]
-        sim.run(start_new_process=True)
+    # Run the simulation
+    sim.run()
