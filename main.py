@@ -28,7 +28,7 @@ if __name__ == "__main__":
     sim.number_of_threads = 1  # Single thread for consistency
     sim.progress_bar = True
     sim.output_dir = "./output"
-    sim.run_timing_intervals = [[i * sec, (i + 1) * sec] for i in range(n)]
+    sim.run_timing_intervals = [[0 * sec, 1 * sec]]
 
     # World
     world = sim.world
@@ -36,56 +36,48 @@ if __name__ == "__main__":
 
     # Volume
     vol = sim.add_volume("Box", "vol")
-    vol.size = [10 * cm] * 3
+    vol.size = [20 * cm] * 3
+    vol.translation = [0 * cm, 0 * cm, 0 * cm]
     vol.material = "G4_WATER"
-    vol.color = [0, 0.5, 1, 1]
 
     # Detector Plane
-    detector_plane = sim.add_volume("Box", "detector_plane")
-    detector_plane.size = [30 * cm, 1 * cm, 30 * cm]
-    detector_plane.material = "G4_Si"
-    detector_plane.translation = [0, -50 * cm, 0]
+    detector_plane = sim.add_volume("Box", "CBCT_detector_plane")
+    detector_plane.size = [10 * mm, 500 * mm, 500 * mm]
+    detector_plane.translation = [-536 * mm, 0, 0]
+    detector_plane.material = "G4_AIR"
+    detector_plane.color = [1, 0, 0, 1]
 
     # Source
     source = sim.add_source("GenericSource", "source")
     source.particle = "gamma"
     source.energy.mono = 60 * keV
     source.position.type = "box"
-    source.position.size = [16 * mm, 16 * mm, 16 * mm]
-    source.position.translation = [0, 50 * cm, 0]  # Positioned opposite the detector
+    source.position.size = [1 * nm, 2 * 8 * mm, 2 * 8 * mm]
+    source.position.translation = [1000 * mm, 0, 0]
     source.direction.type = "focused"
-    source.direction.focus_point = [0, 45 * cm, 0]  # Center of the volume
+    source.direction.focus_point = [950 * mm, 0, 0]
     source.activity = 1e6 * Bq
-
-    hc = sim.add_actor('DigitizerHitsCollectionActor', 'Hits')
-    hc.attached_to = detector_plane.name
-    hc.output_filename = 'hits.root'
-    hc.attributes = ['TotalEnergyDeposit', 'KineticEnergy', 'PostPosition', 'RunID', 'ThreadID', 'TrackID']
-
-    # Projections Actor
-    projections_actor = sim.add_actor("DigitizerProjectionActor", "projections_actor")
-    projections_actor.attached_to = detector_plane.name
-    projections_actor.input_digi_collections = ["Hits"]
-    projections_actor.spacing = [1 * mm, 1 * mm]
-    projections_actor.size = [128, 128]
-    projections_actor.output_filename = "projections.mhd"
 
     # Physics
     sim.physics_manager.physics_list_name = "G4EmStandardPhysics_option1"
+    sim.physics_manager.set_production_cut("world", "all", 10 * mm)
 
     # Define rotation angles for the volume
     angles = np.linspace(0, 360, n, endpoint=False)
 
-    # Create rotation matrices for dynamic parameterization
-    rotations = [
-        Rotation.from_euler("z", angle, degrees=True).as_matrix() for angle in angles
-    ]
+    for i, angle in enumerate(angles):
+        rotation_matrix = Rotation.from_euler("z", angle, degrees=True).as_matrix()
+        vol.rotation = rotation_matrix
+        # Set a unique filename for each projection
+        filename = f"fluence_projection_{i:03d}.mhd"
 
-    # Add dynamic parameterization to the volume
-    vol.add_dynamic_parametrisation(rotation=rotations)
+        # Add FluenceActor for this projection
+        detector_actor = sim.add_actor("FluenceActor", f"detector_actor_{i}")
+        detector_actor.attached_to = detector_plane
+        detector_actor.output_filename = filename
+        detector_actor.spacing = [1 * cm, 0.5 * cm, 0.5 * cm]
+        detector_actor.size = [1, 100, 100]
+        detector_actor.output_coordinate_system = "global"
 
-
-    # Run the simulation
-    sim.run()
-
-    print("All projections completed.")
+        # Run the simulation for this projection
+        sim.run(start_new_process=True)

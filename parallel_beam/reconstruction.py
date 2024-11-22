@@ -10,11 +10,10 @@ print("Loaded sinogram shape:", sinogram.shape)
 theta = np.linspace(0., 180., num=sinogram.shape[0], endpoint=False)
 
 # Apply inverse Radon transform
-reconstructed_slice = iradon(sinogram.T, theta=theta, circle=False, filter='ramp')
+reconstructed_slice = iradon(sinogram.T, theta=theta, circle=False)
 
 # Visualize the reconstructed slice
-plt.figure(figsize=(8, 8))
+plt.figure(figsize=(4, 4))  # Adjust figure size for clarity
 plt.imshow(reconstructed_slice, cmap='gray')
-plt.colorbar()
-plt.title("Reconstructed Slice (Box)")
-plt.savefig("reconstructed_box.png")
+plt.axis('off')  # Optional: turn off the axis if not needed
+plt.savefig("reconstructed_box", bbox_inches='tight', pad_inches=0)

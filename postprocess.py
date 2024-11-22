@@ -1,31 +1,48 @@
+from matplotlib import pyplot as plt
 from skimage.transform import iradon
 import numpy as np
 import SimpleITK as sitk
-import matplotlib.pyplot as plt
+import os
 
-# Load the projection data
-projection_file = "output/projections.mhd"
-projections = sitk.GetArrayFromImage(sitk.ReadImage(projection_file))
+# Path to the directory containing the projection files
+output_dir = "./output"
+n_projections = 10  # Number of projections
 
-# Check projection data shape
-print(f"Projections shape: {projections.shape} (n_projections, detector_height, detector_width)")
+# Load projections
+projections = []
+for i in range(n_projections):
+    filename = os.path.join(output_dir, f"fluence_projection_{i:03d}.mhd")
+    image = sitk.ReadImage(filename)
+    array = sitk.GetArrayFromImage(image)  # Convert to numpy array
+    projections.append(array[0, :, :])  # Extract 2D projection
 
-# Define the projection angles (theta)
-angles = np.linspace(0, 360, projections.shape[0], endpoint=False)
+# Stack projections into a 3D numpy array
+projections = np.stack(projections, axis=0)
 
-# Extract a sinogram for a specific row (e.g., center row)
-row_index = projections.shape[1] // 2  # Middle row of the detector
-sinogram = projections[:, row_index, :]  # (n_projections, detector_width)
+# Define angles for each projection (in degrees)
+angles = np.linspace(0, 360, n_projections, endpoint=False)
 
-# Save the sinogram (optional)
-np.save("cbct_sinogram.npy", sinogram)
+# Initialize an empty list to store reconstructed slices
+reconstructed_slices = []
 
-# Visualize the sinogram
-plt.figure(figsize=(10, 6))
-plt.imshow(sinogram, cmap="gray", aspect="auto")
+# Loop through all z-planes (axial slices)
+for z_index in range(projections.shape[1]):  # Iterate through all axial slices
+    # Extract sinogram for the current z-plane
+    sinogram = projections[:, z_index, :]  # Shape: (n_projections, detector_pixels)
+
+    # Perform filtered backprojection for the current slice
+    reconstructed_slice = iradon(sinogram.T, theta=angles, circle=True)
+    reconstructed_slices.append(reconstructed_slice)
+
+# Stack all reconstructed slices to create a 3D volume
+reconstructed_volume = np.stack(reconstructed_slices, axis=0)
+
+# Visualize the middle slice in the reconstructed volume
+plt.imshow(reconstructed_volume[reconstructed_volume.shape[0] // 2, :, :], cmap="gray")
+plt.title("Central Slice of Reconstructed Volume")
 plt.colorbar(label="Intensity")
-plt.title("CBCT Sinogram")
-plt.xlabel("Detector Elements")
-plt.ylabel("Projection Angle (Degrees)")
-plt.savefig("cbct_sinogram.png")
 plt.show()
+
+# Save the reconstructed volume as a 3D image
+reconstructed_image = sitk.GetImageFromArray(reconstructed_volume)
+sitk.WriteImage(reconstructed_image, "reconstructed_volume.mhd")
