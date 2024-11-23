@@ -15,10 +15,10 @@ Milestone 1, 2024.09.09 - 11.24.
   - [Projections](#projections)
   - [Radon Transformation](#radon-transformation)
   - [Inverse Radon Transformation](#inverse-radon-transformation)
+- [opengate](#opengate)
+  - [Run and Timing](#run-and-timing)
+  - [Actors](#actors)
 - [References](#references)
-- [Run and Timing](#run-and-timing)
-  - [Multiple Runs](#multiple-runs)
-- [Actors](#actors)
 
 ## X-ray Computed Tomography (CT)
 
@@ -90,12 +90,9 @@ Example of the cube and its reconstructed cross section:
 
 ![Cube Cross Section Reconstructed Image](parallel_beam/reconstructed_box.png "Cube Cross Section Reconstructed")
 
-### References
+## opengate
 
-- [opengate](https://github.com/OpenGATE/opengate) and its [documentation](https://opengate-python.readthedocs.io/en/master/)
-- [CT Reconstruction](https://rigaku.com/products/imaging-ndt/x-ray-ct/learning/blog/how-does-ct-reconstruction-work)
-
-## [Run and timing](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_simulation.html#run-and-timing)
+### [Run and timing](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_simulation.html#run-and-timing)
 
 The simulation can be split into several runs, each with a given time duration. This is used for example for simulations with a dynamic geometry, e.g. a rotating gantry or a breathing patient. Gaps between the intervals are allowed. 
 
@@ -104,7 +101,7 @@ By default, the simulation has only one run with a duration of 1 second:
 sim.run_timing_intervals = [[0, 1.0 * sec]]
 ```
 
-### Multiple runs
+#### Multiple runs
 
 Splitting a simulation into multiple runs is faster than executing a simulation multiple times.
 
@@ -117,9 +114,9 @@ sim.run_timing_intervals = [
 ]
 ```
 
-## Actors
+### Actors
 
-### [`DigitizerHitsCollectionActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#digitizerhitscollectionactor)
+#### [`DigitizerHitsCollectionActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#digitizerhitscollectionactor)
 
 The DigitizerHitsCollectionActor collects hits occurring in a given volume (or its daughter volumes). Every time a step occurs in the volume, a list of attributes is recorded. The list of attributes is defined by the user:
 ```python
@@ -130,6 +127,15 @@ hc.attributes = ['TotalEnergyDeposit', 'KineticEnergy', 'PostPosition',
                  'CreatorProcess', 'GlobalTime', 'VolumeName', 'RunID', 'ThreadID', 'TrackID']
 ```
 
-### [`DigitizerProjectionActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#opengate.actors.digitizers.DigitizerProjectionActor)
+#### [`DigitizerProjectionActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#opengate.actors.digitizers.DigitizerProjectionActor)
 
 This actor takes as input HitsCollections and performed binning in 2D images. If there are several HitsCollection as input, the slices will correspond to each HC. If there are several runs, images will also be slice-stacked.
+
+#### [`FluenceActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#fluenceactor)
+
+This actor scores the particle fluence on a voxel grid, essentially by counting the number of particles passing through each voxel. The FluenceActor will be extended in the future with features to handle scattered radiation, e.g. in cone beam CT imaging.
+
+### References
+
+- [opengate](https://github.com/OpenGATE/opengate) and its [documentation](https://opengate-python.readthedocs.io/en/master/)
+- [CT Reconstruction](https://rigaku.com/products/imaging-ndt/x-ray-ct/learning/blog/how-does-ct-reconstruction-work)
