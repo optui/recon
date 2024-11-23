@@ -1,110 +1,96 @@
 # README
 
-- Report
-- 2024.09.09 - 11.24.
+This README provides an overview of X-ray Computed Tomography (CT), reconstruction and [opengate](https://github.com/OpenGATE/opengate).
+
+Milestone 1, 2024.09.09 - 11.24.
 
 ## Contents
 
-- [Overview](#overview)
-  - [X-ray Computed Tomography (CT)](#x-ray-computed-tomography-ct)
-    - [Absorption Contrast Imaging](#absorption-contrast-imaging)
-    - [X-ray CT Geometries](#x-ray-ct-geometries)
-    - [General Components](#general-components)
-  - [Reconstruction](#reconstruction)
-    - [Projections](#projections)
-    - [Radon Transformation](#radon-transformation)
-    - [Sinogram](#sinogram)
-    - [Inverse Radon Transformation](#inverse-radon-transformation)
-    - [Filtered Back-Projection (FBP)](#filtered-back-projection)
-  - [References](#references)
+- [Contents](#contents)
+- [X-ray Computed Tomography (CT)](#x-ray-computed-tomography-ct)
+  - [Absorption Contrast Imaging](#absorption-contrast-imaging)
+  - [X-ray CT Geometries](#x-ray-ct-geometries)
+  - [General Components](#general-components)
+- [Reconstruction](#reconstruction)
+  - [Projections](#projections)
+  - [Radon Transformation](#radon-transformation)
+  - [Inverse Radon Transformation](#inverse-radon-transformation)
+- [References](#references)
 - [Run and Timing](#run-and-timing)
   - [Multiple Runs](#multiple-runs)
 - [Actors](#actors)
 
-## Overview
-
-This README provides an overview of X-ray Computed Tomography (CT), reconstruction and [opengate](https://github.com/OpenGATE/opengate).
-
-### X-ray Computed Tomography (CT)
+## X-ray Computed Tomography (CT)
 
 X-ray Computed Tomography (CT) is a non-destructive imaging technique used to visualize the internal density distribution of an object in either 2D cross-sections or a 3D volumetric representation.
 
-#### Absorption Contrast Imaging
+### Absorption Contrast Imaging
 
 Absorption contrast imaging observes differences in X-ray absorption within the object, due to its properties (eg. density), to generate contrast in the images.
 
-#### X-ray CT Geometries
+### X-ray CT Source Geometries
 
 | Type               | Description                                                 |
 |--------------------|-------------------------------------------------------------|
-| **Parallel Beam**  | X-rays are collimated into parallel beams.                  |
-| **Fan Beam**       | X-rays diverge in a fan shape within a single plane.        |
-| **Cone Beam**      | X-rays diverge in a cone shape, covering a volumetric area. |
+| Parallel Beam      | X-rays are collimated into parallel beams.                  |
+| Fan Beam           | X-rays diverge in a fan shape within a single plane.        |
+| Cone Beam          | X-rays diverge in a cone shape, covering a volumetric area. |
 
-#### General components
+### General components
 
 | Name               | Description                                                |
 |--------------------|------------------------------------------------------------|
-| **Source**         | Emits X-ray beams towards the phantom.                     |
-| **Phantom**        | The object being imaged.                                   |
-| **Detector**       | Captures the X-rays after passing through the object.      |
+| Source             | Emits X-ray beams towards the phantom.                     |
+| Phantom            | The object being imaged.                                   |
+| Detector           | Captures the X-rays after passing through the object.      |
 
-In a typical CT system, the X-ray source and detector rotate around the phantom. This rotation allows for the collection of projections from multiple angles, which are essential for accurate image reconstruction. 
+In a typical CT system, the X-ray source and detector rotate around the phantom. This rotation allows for the collection of projections from multiple angles, which are essential for accurate image reconstruction.
 
-### Reconstruction
+## Reconstruction
 
-**Reconstruction** is the mathematical process of converting collected 2D projections into a 3D image by estimating the internal distribution of the X-ray attenuation coefficients within the object.
+Reconstruction is the mathematical process of converting 2D projections collected from multiple angles into images that represent the internal structure of the object. It estimates the distribution of X-ray attenuation coefficients within the object.
 
-- **Purpose:**
-  - To "back-calculate" the absorption coefficient distribution based on observed projections.
-  - To generate cross-sectional images or volumetric data for analysis.
+### Projections
 
-- **Algorithms:**
-  - **Filtered Back-Projection (FBP)**
-  - **Iterative Reconstruction**
-  - **Deep Learning Techniques**
+A projection is a 2D image that represents the attenuation of X-rays as they pass through the object at a specific angle.
 
-- **Steps:**
-  1. **Data Collection:** Acquire 2D projections at various angles around the object.
-  2. **Image Reconstruction:** Apply mathematical algorithms to reconstruct the 3D data or generate CT cross-sectional images from these projections.
-  3. **Output Generation:** Store the reconstructed images in formats like TIFF stacks or DICOM files for visualization and analysis.
+### Reconstruction Algorithms
 
-#### Projections
+- Algorithms:
+  - Filtered Back-Projection
+  - Iterative Reconstruction
+  - Deep Learning Techniques
 
-- **Definition:**
-  - A **projection** is a 2D image that represents the attenuation of X-rays as they pass through the object at a specific angle.
+- Steps in Reconstruction:
+  1. Data Collection: Acquire 2D projections at various angles around the object.
+  2. Image Reconstruction: Apply algorithms to reconstruct the internal structure from these projections.
+  3. Output Generation: Store the reconstructed images for visualization and analysis.
 
-#### Radon Transformation
+### Radon Transformation
 
-The **Radon Transformation** is a mathematical tool that relates the internal structure of an object to the projections obtained from different angles.
+The Radon Transformation is a mathematical tool that relates the internal structure of an object to the projections obtained from different angles.
+
+The Radon transform data is often called a sinogram because the Radon transform of an off-center point source is a sinusoid.
 
 #### Sinogram
 
-Visual representation of the projection data collected during a CT scan, illustrating how the projections vary with rotation angle.
+A sinogram is a visual representation of the projection data collected during a CT scan. It is formed by stacking all the projections obtained at different angles, creating a 2D image where one axis represents the detector position and the other axis represents the projection angle. The sinogram illustrates how the projections vary with rotation angle and serves as the raw data input for reconstruction algorithms.
 
-- **Usage:**
-  - Serves as the raw data input for reconstruction algorithms like FBP.
-  - Allows for the detection of inconsistencies or artifacts in the data acquisition process.
+Example of a cube's sinogram via parallel beam CT:
 
-**Example** of a cube geometry's sinogram via parallel beam CT:
+![Cube Sinogram Image](parallel_beam/sinogram.png "Cube Sinogram")
 
-![Parallel Beam Sinogram Image](parallel_beam/sinogram.png "Title")
-
-#### Inverse Radon Transformation
+### Inverse Radon Transformation
 
 Reconstructs the original 2D image (slice) from the sinogram.
 
 - The sinogram is transposed to align properly for reconstruction.
 
-**Example** of the previously mentioned cube's reconstruction:
+Example of the cube and its reconstructed cross section:
 
-![Parallel Beam Reconstructed Image](parallel_beam/reconstructed_box.png "Title")
+![Cube Cross Section Reconstructed Image](parallel_beam/reconstructed_box.png "Cube Cross Section Reconstructed")
 
-#### Filtered Back Projection
-
-
-
-#### References
+### References
 
 - [opengate](https://github.com/OpenGATE/opengate) and its [documentation](https://opengate-python.readthedocs.io/en/master/)
 - [CT Reconstruction](https://rigaku.com/products/imaging-ndt/x-ray-ct/learning/blog/how-does-ct-reconstruction-work)
