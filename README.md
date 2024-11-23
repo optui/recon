@@ -9,10 +9,12 @@
   - [X-ray Computed Tomography (CT)](#x-ray-computed-tomography-ct)
     - [Absorption Contrast Imaging](#absorption-contrast-imaging)
     - [X-ray CT Geometries](#x-ray-ct-geometries)
+    - [General Components](#general-components)
   - [Reconstruction](#reconstruction)
     - [Projections](#projections)
     - [Radon Transformation](#radon-transformation)
     - [Sinogram](#sinogram)
+    - [Inverse Radon Transformation](#inverse-radon-transformation)
     - [Filtered Back-Projection (FBP)](#filtered-back-projection)
   - [References](#references)
 - [Run and Timing](#run-and-timing)
@@ -21,34 +23,33 @@
 
 ## Overview
 
-This README provides an overview of X-ray Computed Tomography (CT), including its principles, reconstruction algorithms, and simulation using OpenGATE. It also details how to set up and run multiple simulations with different timing intervals and explains the roles of various actors in the simulation process.
+This README provides an overview of X-ray Computed Tomography (CT), reconstruction and [opengate](https://github.com/OpenGATE/opengate).
 
 ### X-ray Computed Tomography (CT)
 
-A non-destructive imaging technique used to scan the internal density distribution of an object.
-
-- Mechanism:
-    - An X-ray source and a detector rotate around the object.
-    - Multiple 2D projections are captured from different angles.
-    - Projections are combined using reconstruction algorithms to create a 3D/2D image of the object.
+X-ray Computed Tomography (CT) is a non-destructive imaging technique used to visualize the internal density distribution of an object in either 2D cross-sections or a 3D volumetric representation.
 
 #### Absorption Contrast Imaging
 
-Leverages the differences in X-ray absorption rates within the object to generate contrast in the images.
-
-- Mechanism:
-  - X-rays pass through the object and are absorbed to varying degrees based on the material's properties.
-  - Denser or thicker areas absorb more X-rays, resulting in lower intensity on the detector.
-  - This contrast enables the differentiation of various structures within the object.
+Absorption contrast imaging observes differences in X-ray absorption within the object, due to its properties (eg. density), to generate contrast in the images.
 
 #### X-ray CT Geometries
 
-The geometry of the CT system influences the data acquisition process and the reconstruction algorithms used.
+| Type               | Description                                                 |
+|--------------------|-------------------------------------------------------------|
+| **Parallel Beam**  | X-rays are collimated into parallel beams.                  |
+| **Fan Beam**       | X-rays diverge in a fan shape within a single plane.        |
+| **Cone Beam**      | X-rays diverge in a cone shape, covering a volumetric area. |
 
-- Types:
-  - **Parallel Beam**
-  - **Fan Beam**
-  - **Cone Beam**
+#### General components
+
+| Name               | Description                                                |
+|--------------------|------------------------------------------------------------|
+| **Source**         | Emits X-ray beams towards the phantom.                     |
+| **Phantom**        | The object being imaged.                                   |
+| **Detector**       | Captures the X-rays after passing through the object.      |
+
+In a typical CT system, the X-ray source and detector rotate around the phantom. This rotation allows for the collection of projections from multiple angles, which are essential for accurate image reconstruction. 
 
 ### Reconstruction
 
@@ -105,7 +106,7 @@ Reconstructs the original 2D image (slice) from the sinogram.
 
 #### References
 
-- [`opengate`](https://github.com/OpenGATE/opengate) and its [documentation](https://opengate-python.readthedocs.io/en/master/)
+- [opengate](https://github.com/OpenGATE/opengate) and its [documentation](https://opengate-python.readthedocs.io/en/master/)
 - [CT Reconstruction](https://rigaku.com/products/imaging-ndt/x-ray-ct/learning/blog/how-does-ct-reconstruction-work)
 
 ## [Run and timing](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_simulation.html#run-and-timing)
