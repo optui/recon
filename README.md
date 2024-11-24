@@ -13,10 +13,11 @@ Milestone 1, 2024.09.09 - 11.24.
   - [General Components](#general-components)
 - [Reconstruction](#reconstruction)
   - [Projections](#projections)
-  - [Filtered Back Projection](#filtered-back-projection)
-    - [Radon Transformation](#radon-transformation)
+  - [Filtered Back Projection (FBP)](#filtered-back-projection-fbp)
+    - [Radon Transform](#radon-transform)
     - [Sinogram](#sinogram)
-    - [Inverse Radon Transformation](#inverse-radon-transformation)
+    - [Filtering](#filtering)
+    - [Back Projection (Inverse Radon Transform)](#back-projection-inverse-radon-transform)
 - [opengate](#opengate)
   - [Run and Timing](#run-and-timing)
   - [Actors](#actors)
@@ -24,7 +25,7 @@ Milestone 1, 2024.09.09 - 11.24.
 
 ## X-ray Computed Tomography (CT)
 
-X-ray Computed Tomography (CT) is a non-destructive imaging technique used to visualize the internal density distribution of an object in either 2D cross-sections or a 3D volumetric representation.
+X-ray CT is a non-destructive imaging technique used to visualize the internal density distribution of an object in either 2D cross-sections or a 3D volumetric representation.
 
 ### Absorption Contrast Imaging
 
@@ -56,23 +57,30 @@ Reconstruction is the mathematical process of converting 2D projections collecte
 
 ### Projections
 
-A projection is a 2D image that represents the attenuation of X-rays as they pass through the object at a specific angle.
+A projection is a 2D image that represents the attenuation of X-rays as they pass through the object at a specific angle. Each projection is essentially a line integral of the object's internal structure, capturing how much X-ray radiation is absorbed or scattered at each point in the object along that particular path.
 
-### Filtered Back Projection
+### Filtered Back Projection (FBP)
 
-#### Radon Transformation
+FBP is a reconstruction technique used in CT that combines the Radon Transform, filtering, and back projection to reconstruct an image from its projections.
 
-The Radon Transformation is a mathematical tool that relates the internal structure of an object to the projections obtained from different angles. Its output is a sinogram.
+
+#### Radon Transform
+
+The Radon Transform is a mathematical tool that relates the internal structure of an object to the projections obtained from different angles. Its output is a sinogram.
 
 #### Sinogram
 
-A sinogram is a visual representation of the projection data collected during a CT scan. It is formed by stacking all the projections obtained at different angles, creating a 2D image where one axis represents the detector position and the other axis represents the projection angle.
+A sinogram is a visual representation of the projection data collected during a CT scan. It is formed by stacking all the projections obtained at different angles. On a sinogram, the horizontal axis represents the projection angle, while the vertical axis represents the detector position (or radial distance). Each line in the sinogram corresponds to a projection at a particular angle.
 
-#### Inverse Radon Transformation
+#### Filtering
 
-Reconstructs the original 2D image (slice) from the sinogram.
+The projections are filtered to correct for the blurring effects that occur during the inverse Radon Transform.
 
-#### Example of a cube's sinogram and reconstructed cross section
+#### Back Projection (Inverse Radon Transform)
+
+After filtering, the back projection step takes each projection, which represents a "shadow" of the object from a specific angle, and smears it back over the image grid along the corresponding angle. This process is repeated for each projection angle, resulting in an image that approximates the original object’s internal structure.
+
+#### Example of a cube's sinogram and reconstructed cross section without filtering
 
 ![Cube Sinogram Image](sinogram_and_corss-section_reconstruction.png "Cube Sinogram")
 
@@ -87,7 +95,7 @@ By default, the simulation has only one run with a duration of 1 second:
 sim.run_timing_intervals = [[0, 1.0 * sec]]
 ```
 
-#### Multiple runs
+#### Multiple Runs
 
 Splitting a simulation into multiple runs is faster than executing a simulation multiple times.
 
@@ -102,24 +110,15 @@ sim.run_timing_intervals = [
 
 ### Actors
 
-#### [`DigitizerHitsCollectionActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#digitizerhitscollectionactor)
+| Algorithm | Actors                                                         |
+|-----------|----------------------------------------------------------------|
+| FBP       | `DigitizerHitsCollectionActor`, `DigitizerProjectionActor`     |
+| CBCT (?)  | `FluenceActor`                                                 |
+|           |                                                                |
 
-The DigitizerHitsCollectionActor collects hits occurring in a given volume (or its daughter volumes). Every time a step occurs in the volume, a list of attributes is recorded. The list of attributes is defined by the user:
-```python
-hc = sim.add_actor('DigitizerHitsCollectionActor', 'Hits')
-hc.attached_to = ['crystal1', 'crystal2']
-hc.output_filename = 'test_hits.root'
-hc.attributes = ['TotalEnergyDeposit', 'KineticEnergy', 'PostPosition',
-                 'CreatorProcess', 'GlobalTime', 'VolumeName', 'RunID', 'ThreadID', 'TrackID']
-```
-
-#### [`DigitizerProjectionActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#opengate.actors.digitizers.DigitizerProjectionActor)
-
-This actor takes as input HitsCollections and performed binning in 2D images. If there are several HitsCollection as input, the slices will correspond to each HC. If there are several runs, images will also be slice-stacked.
-
-#### [`FluenceActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#fluenceactor)
-
-This actor scores the particle fluence on a voxel grid, essentially by counting the number of particles passing through each voxel. The FluenceActor will be extended in the future with features to handle scattered radiation, e.g. in cone beam CT imaging.
+- [`DigitizerHitsCollectionActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#digitizerhitscollectionactor)
+- [`DigitizerProjectionActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#opengate.actors.digitizers.DigitizerProjectionActor)
+- [`FluenceActor`](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_actors.html#fluenceactor)
 
 ### References
 
