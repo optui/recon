@@ -13,8 +13,10 @@ Milestone 1, 2024.09.09 - 11.24.
   - [General Components](#general-components)
 - [Reconstruction](#reconstruction)
   - [Projections](#projections)
-  - [Radon Transformation](#radon-transformation)
-  - [Inverse Radon Transformation](#inverse-radon-transformation)
+  - [Filtered Back Projection](#filtered-back-projection)
+    - [Radon Transformation](#radon-transformation)
+    - [Sinogram](#sinogram)
+    - [Inverse Radon Transformation](#inverse-radon-transformation)
 - [opengate](#opengate)
   - [Run and Timing](#run-and-timing)
   - [Actors](#actors)
@@ -56,41 +58,23 @@ Reconstruction is the mathematical process of converting 2D projections collecte
 
 A projection is a 2D image that represents the attenuation of X-rays as they pass through the object at a specific angle.
 
-### Reconstruction Algorithms
+### Filtered Back Projection
 
-- Algorithms:
-  - Filtered Back-Projection
-  - Iterative Reconstruction
-  - Deep Learning Techniques
+#### Radon Transformation
 
-- Steps in Reconstruction:
-  1. Data Collection: Acquire 2D projections at various angles around the object.
-  2. Image Reconstruction: Apply algorithms to reconstruct the internal structure from these projections.
-  3. Output Generation: Store the reconstructed images for visualization and analysis.
-
-### Radon Transformation
-
-The Radon Transformation is a mathematical tool that relates the internal structure of an object to the projections obtained from different angles.
-
-The Radon transform data is often called a sinogram because the Radon transform of an off-center point source is a sinusoid.
+The Radon Transformation is a mathematical tool that relates the internal structure of an object to the projections obtained from different angles. Its output is a sinogram.
 
 #### Sinogram
 
-A sinogram is a visual representation of the projection data collected during a CT scan. It is formed by stacking all the projections obtained at different angles, creating a 2D image where one axis represents the detector position and the other axis represents the projection angle. The sinogram illustrates how the projections vary with rotation angle and serves as the raw data input for reconstruction algorithms.
+A sinogram is a visual representation of the projection data collected during a CT scan. It is formed by stacking all the projections obtained at different angles, creating a 2D image where one axis represents the detector position and the other axis represents the projection angle.
 
-Example of a cube's sinogram via parallel beam CT:
-
-![Cube Sinogram Image](parallel_beam/sinogram.png "Cube Sinogram")
-
-### Inverse Radon Transformation
+#### Inverse Radon Transformation
 
 Reconstructs the original 2D image (slice) from the sinogram.
 
-- The sinogram is transposed to align properly for reconstruction.
+#### Example of a cube's sinogram and reconstructed cross section
 
-Example of the cube and its reconstructed cross section:
-
-![Cube Cross Section Reconstructed Image](parallel_beam/reconstructed_box.png "Cube Cross Section Reconstructed")
+![Cube Sinogram Image](sinogram_and_corss-section_reconstruction.png "Cube Sinogram")
 
 ## opengate
 
