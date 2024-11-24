@@ -12,7 +12,6 @@ Milestone 1, 2024.09.09 - 11.24.
     - [X-ray CT Geometries](#x-ray-ct-geometries)
     - [General Components](#general-components)
 - [Reconstruction](#reconstruction)
-    - [Projections](#projections)
     - [Filtered Back Projection (FBP)](#filtered-back-projection-fbp)
 - [opengate](#opengate)
     - [Run and Timing](#run-and-timing)
@@ -43,6 +42,8 @@ Absorption contrast imaging observes differences in X-ray absorption within the 
 | Phantom            | The object being imaged.                                    |
 | Detector           | Captures the X-rays after passing through the object.       |
 
+### X-ray CT overview
+
 ![X-ray CT Source Geometries](media/x-ray_ct_geometries.png "X-ray CT Source Geometries")
 
 In a typical CT system, the X-ray source and detector rotate around the phantom. This rotation allows for the collection of projections from multiple angles, which are essential for accurate image reconstruction.
@@ -50,8 +51,6 @@ In a typical CT system, the X-ray source and detector rotate around the phantom.
 ## Reconstruction
 
 Reconstruction in CT is the process of creating images of an object's internal structure from multiple X-ray images taken at different angles.
-
-### Projections
 
 A projection is a 2D image that shows the attenuation of X-rays as they pass through the object at a specific angle.
 
@@ -72,7 +71,7 @@ FBP is a reconstruction technique used in CT to reconstruct a 2D image of an obj
     - The filtered projections are **back-projected** over an image along their angles.  
     - By combining all back-projected images, the original image is approximated.
 
-#### Example of a cube's sinogram and reconstructed cross section without filtering
+#### Example of a cube's sinogram and reconstructed cross section using Back Projection
 
 ![Cube Sinogram Image](media/sinogram_and_cross-section_reconstruction.png "Cube Sinogram")
 
