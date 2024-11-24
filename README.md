@@ -8,19 +8,15 @@ Milestone 1, 2024.09.09 - 11.24.
 
 - [Contents](#contents)
 - [X-ray Computed Tomography (CT)](#x-ray-computed-tomography-ct)
-  - [Absorption Contrast Imaging](#absorption-contrast-imaging)
-  - [X-ray CT Geometries](#x-ray-ct-geometries)
-  - [General Components](#general-components)
+    - [Absorption Contrast Imaging](#absorption-contrast-imaging)
+    - [X-ray CT Geometries](#x-ray-ct-geometries)
+    - [General Components](#general-components)
 - [Reconstruction](#reconstruction)
-  - [Projections](#projections)
-  - [Filtered Back Projection (FBP)](#filtered-back-projection-fbp)
-    - [Radon Transform](#radon-transform)
-    - [Sinogram](#sinogram)
-    - [Filtering](#filtering)
-    - [Back Projection (Inverse Radon Transform)](#back-projection-inverse-radon-transform)
+    - [Projections](#projections)
+    - [Filtered Back Projection (FBP)](#filtered-back-projection-fbp)
 - [opengate](#opengate)
-  - [Run and Timing](#run-and-timing)
-  - [Actors](#actors)
+    - [Run and Timing](#run-and-timing)
+    - [Actors](#actors)
 - [References](#references)
 
 ## X-ray Computed Tomography (CT)
@@ -39,50 +35,46 @@ Absorption contrast imaging observes differences in X-ray absorption within the 
 | Fan Beam           | X-rays diverge in a fan shape within a single plane.        |
 | Cone Beam          | X-rays diverge in a cone shape, covering a volumetric area. |
 
-![X-ray CT Source Geometries](x-ray_ct_geometries.png "X-ray CT Source Geometries")
-
 ### General components
 
-| Name               | Description                                                |
-|--------------------|------------------------------------------------------------|
-| Source             | Emits X-ray beams towards the phantom.                     |
-| Phantom            | The object being imaged.                                   |
-| Detector           | Captures the X-rays after passing through the object.      |
+| Name               | Description                                                 |
+|--------------------|-------------------------------------------------------------|
+| Source             | Emits X-ray beams towards the phantom.                      |
+| Phantom            | The object being imaged.                                    |
+| Detector           | Captures the X-rays after passing through the object.       |
+
+![X-ray CT Source Geometries](media/x-ray_ct_geometries.png "X-ray CT Source Geometries")
 
 In a typical CT system, the X-ray source and detector rotate around the phantom. This rotation allows for the collection of projections from multiple angles, which are essential for accurate image reconstruction.
 
 ## Reconstruction
 
-Reconstruction is the mathematical process of converting 2D projections collected from multiple angles into images that represent the internal structure of the object. It estimates the distribution of X-ray attenuation coefficients within the object.
+Reconstruction in CT is the process of creating images of an object's internal structure from multiple X-ray images taken at different angles.
 
 ### Projections
 
-A projection is a 2D image that represents the attenuation of X-rays as they pass through the object at a specific angle. Each projection is essentially a line integral of the object's internal structure, capturing how much X-ray radiation is absorbed or scattered at each point in the object along that particular path.
+A projection is a 2D image that shows the attenuation of X-rays as they pass through the object at a specific angle.
 
 ### Filtered Back Projection (FBP)
 
-FBP is a reconstruction technique used in CT that combines the Radon Transform, filtering, and back projection to reconstruct an image from its projections.
+FBP is a reconstruction technique used in CT to reconstruct a 2D image of an object's internal structure from a series of 1D projections taken at different angles.
 
-
-#### Radon Transform
-
-The Radon Transform is a mathematical tool that relates the internal structure of an object to the projections obtained from different angles. Its output is a sinogram.
-
-#### Sinogram
-
-A sinogram is a visual representation of the projection data collected during a CT scan. It is formed by stacking all the projections obtained at different angles. On a sinogram, the horizontal axis represents the projection angle, while the vertical axis represents the detector position (or radial distance). Each line in the sinogram corresponds to a projection at a particular angle.
-
-#### Filtering
-
-The projections are filtered to correct for the blurring effects that occur during the inverse Radon Transform.
-
-#### Back Projection (Inverse Radon Transform)
-
-After filtering, the back projection step takes each projection, which represents a "shadow" of the object from a specific angle, and smears it back over the image grid along the corresponding angle. This process is repeated for each projection angle, resulting in an image that approximates the original object’s internal structure.
+1. **Radon Transform**:
+    - Generates data representing the sum of absorption along each X-ray path.
+    - Outputs a **sinogram**:
+        - All projections are stacked together.
+        - Displays how the projections change with each angle.
+        - One axis represents the angle, the other the detector position.
+2. **Filtering**:
+    - Applies filters: Ram-Lak, Shepp-Logan, ramp, ...
+    - Emphasizes edges and fine details, making the reconstruction sharper.
+3. **Back Projection** (Inverse Radon Transform):
+    - The filtered projections are **back-projected** over an image along their angles.  
+    - By combining all back-projected images, the original image is approximated.
 
 #### Example of a cube's sinogram and reconstructed cross section without filtering
 
-![Cube Sinogram Image](sinogram_and_corss-section_reconstruction.png "Cube Sinogram")
+![Cube Sinogram Image](media/sinogram_and_cross-section_reconstruction.png "Cube Sinogram")
 
 ## opengate
 
