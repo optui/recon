@@ -36,6 +36,8 @@ Absorption contrast imaging observes differences in X-ray absorption within the 
 | Fan Beam           | X-rays diverge in a fan shape within a single plane.        |
 | Cone Beam          | X-rays diverge in a cone shape, covering a volumetric area. |
 
+![X-ray CT Source Geometries](x-ray_ct_geometries.png "X-ray CT Source Geometries")
+
 ### General components
 
 | Name               | Description                                                |
