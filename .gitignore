@@ -2,3 +2,6 @@ output
 venv
 data
 *.drawio.png
+*.npy
+*.raw
+*.mhd

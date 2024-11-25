@@ -10,7 +10,8 @@ Milestone 1, 2024.09.09 - 11.24.
 - [X-ray Computed Tomography (CT)](#x-ray-computed-tomography-ct)
     - [Absorption Contrast Imaging](#absorption-contrast-imaging)
     - [X-ray CT Geometries](#x-ray-ct-geometries)
-    - [General Components](#general-components)
+    - [General components](#general-components)
+    - [Illustration](#illustration)
 - [Reconstruction](#reconstruction)
     - [Filtered Back Projection (FBP)](#filtered-back-projection-fbp)
 - [opengate](#opengate)
@@ -34,7 +35,7 @@ Absorption contrast imaging observes differences in X-ray absorption within the 
 | Fan Beam           | X-rays diverge in a fan shape within a single plane.        |
 | Cone Beam          | X-rays diverge in a cone shape, covering a volumetric area. |
 
-### General components
+### General Components
 
 | Name               | Description                                                 |
 |--------------------|-------------------------------------------------------------|
@@ -42,7 +43,7 @@ Absorption contrast imaging observes differences in X-ray absorption within the 
 | Phantom            | The object being imaged.                                    |
 | Detector           | Captures the X-rays after passing through the object.       |
 
-### X-ray CT overview
+### Illustration
 
 ![X-ray CT Source Geometries](media/x-ray_ct_geometries.png "X-ray CT Source Geometries")
 

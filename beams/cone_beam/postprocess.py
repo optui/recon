@@ -1,48 +1,54 @@
-from matplotlib import pyplot as plt
-from skimage.transform import iradon
-import numpy as np
 import SimpleITK as sitk
-import os
+import numpy as np
+import astra
 
-# Path to the directory containing the projection files
-output_dir = "./output"
-n_projections = 10  # Number of projections
-
-# Load projections
+# Load all projections
+n_projections = 180
 projections = []
+
 for i in range(n_projections):
-    filename = os.path.join(output_dir, f"fluence_projection_{i:03d}.mhd")
-    image = sitk.ReadImage(filename)
-    array = sitk.GetArrayFromImage(image)  # Convert to numpy array
-    projections.append(array[0, :, :])  # Extract 2D projection
+    image = sitk.ReadImage(f"output/fluence_{i}.mhd")
+    proj = sitk.GetArrayFromImage(image)
+    proj = np.squeeze(proj)
+    projections.append(proj)
+projections = np.array(projections)
 
-# Stack projections into a 3D numpy array
-projections = np.stack(projections, axis=0)
+print(projections.shape)  # (180, 512, 512)
 
-# Define angles for each projection (in degrees)
-angles = np.linspace(0, 360, n_projections, endpoint=False)
+# Get dimensions from projections
+_, det_row_count, det_col_count = projections.shape
 
-# Initialize an empty list to store reconstructed slices
-reconstructed_slices = []
+# Define geometry parameters
+vol_size = 512  # assuming cubic volume
+det_spacing_x = 1.0  # detector pixel size in mm
+det_spacing_y = 1.0  # detector pixel size in mm
+source_origin = 1000  # distance from source to rotation center in mm
+origin_det = 536    # distance from rotation center to detector in mm
+angles = np.linspace(0, 2*np.pi, n_projections, False)  # projection angles
 
-# Loop through all z-planes (axial slices)
-for z_index in range(projections.shape[1]):  # Iterate through all axial slices
-    # Extract sinogram for the current z-plane
-    sinogram = projections[:, z_index, :]  # Shape: (n_projections, detector_pixels)
+# Create volume geometry
+vol_geom = astra.create_vol_geom(vol_size, vol_size, vol_size)
 
-    # Perform filtered backprojection for the current slice
-    reconstructed_slice = iradon(sinogram.T, theta=angles, circle=True)
-    reconstructed_slices.append(reconstructed_slice)
+# Create projection geometry
+proj_geom = astra.create_proj_geom('cone', 
+                                  det_spacing_x, det_spacing_y,
+                                  det_row_count, det_col_count,
+                                  angles, 
+                                  source_origin, origin_det)
 
-# Stack all reconstructed slices to create a 3D volume
-reconstructed_volume = np.stack(reconstructed_slices, axis=0)
+# Create projector
+projector_id = astra.create_projector('cuda3d', proj_geom, vol_geom)
 
-# Visualize the middle slice in the reconstructed volume
-plt.imshow(reconstructed_volume[reconstructed_volume.shape[0] // 2, :, :], cmap="gray")
-plt.title("Central Slice of Reconstructed Volume")
-plt.colorbar(label="Intensity")
-plt.show()
+# Transpose projections to match ASTRA's expected dimensions
+projections = np.transpose(projections, (1, 0, 2))
 
-# Save the reconstructed volume as a 3D image
-reconstructed_image = sitk.GetImageFromArray(reconstructed_volume)
-sitk.WriteImage(reconstructed_image, "reconstructed_volume.mhd")
+# Create sinogram
+sinogram_id = astra.data3d.create('-sino', proj_geom, projections)
+
+# Get the sinogram data and save it
+sinogram_data = astra.data3d.get(sinogram_id)
+
+# Save as MetaImage format (MHD/RAW)
+sinogram_sitk = sitk.GetImageFromArray(sinogram_data)
+sitk.WriteImage(sinogram_sitk, "sinogram.mhd")
+
