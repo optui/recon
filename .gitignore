@@ -5,3 +5,8 @@ data
 *.npy
 *.raw
 *.mhd
+__pycache__
+gate-wrappers
+gate-wrappers/*
+LEAP
+LEAP/*

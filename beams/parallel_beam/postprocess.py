@@ -1,51 +1,69 @@
 import numpy as np
-import astra
-import matplotlib.pyplot as plt
+import SimpleITK as sitk
+import leapctype
+from leap_preprocessing_algorithms import ringRemoval
+import napari
 
-# Configuration
-dim_angles, dim_rows, dim_cols = 180, 256, 256
-middle_row = dim_rows // 2
+# Step 1: Load projection data
+projections = sitk.ReadImage("./output/projection.mhd")
+projections_data = sitk.GetArrayFromImage(projections)
 
-# Load and reshape raw data
-sinogram = np.fromfile('output/projection.raw', dtype=np.float32).reshape((dim_angles, dim_rows, dim_cols))[:, middle_row, :]
+# Check projection dimensions
+numAngles, numRows, numCols = projections_data.shape
+print(f"Loaded Projections: {projections_data.shape} (Angles, Rows, Columns)")
 
-# Visualization of sinogram
-plt.imshow(sinogram, cmap='gray')
-plt.title('Sinogram')
-plt.xlabel('Detector Bins')
-plt.ylabel('Angles')
-plt.savefig("sinogram.png")
+# Step 2: Initialize LEAP tomographic model
+lct = leapctype.tomographicModels()
 
-# Define angles and geometries for ASTRA
-angles = np.linspace(0, np.pi, dim_angles, endpoint=False)
-proj_geom = astra.create_proj_geom('parallel', 1.0, dim_cols, angles)
-vol_geom = astra.create_vol_geom(dim_cols, dim_cols)
-proj_id = astra.create_projector('linear', proj_geom, vol_geom)
+# Set parallel beam geometry
+pixelSize = 1.0  # Assuming 1 mm pixel size; adjust based on your setup
+phis = lct.setAngleArray(numAngles, 360.0)  # Rotating 360 degrees for parallel beam
 
-# Create sinogram ID
-sinogram_id = astra.data2d.create('-sino', proj_geom, sinogram)
+lct.set_parallelbeam(
+    numAngles=numAngles,  # Number of projections (angles)
+    numRows=numRows,      # Detector rows
+    numCols=numCols,      # Detector columns
+    pixelHeight=pixelSize, 
+    pixelWidth=pixelSize,
+    centerRow=0.5 * (numRows - 1),  # Center of the detector
+    centerCol=0.5 * (numCols - 1),  # Center of the detector
+    phis=phis                      # Projection angles
+)
 
-# Create volume ID for the reconstruction
-reconstruction_id = astra.data2d.create('-vol', vol_geom)
+# Step 3: Set the reconstruction volume parameters
+numX = numCols  # Reconstruction volume X dimension
+numY = numRows  # Reconstruction volume Y dimension
+numZ = numCols  # Reconstruction volume Z dimension (depth)
+voxelWidth = pixelSize
+voxelHeight = pixelSize
+voxelDepth = pixelSize  # For isotropic voxels
 
-# Configure and run the FBP algorithm
-cfg = astra.astra_dict('FBP')
-cfg['ReconstructionDataId'] = reconstruction_id
-cfg['ProjectorId'] = proj_id
-cfg['ProjectionDataId'] = sinogram_id
-cfg['FilterType'] = 'Ram-Lak'
-fbp_id = astra.algorithm.create(cfg)
-astra.algorithm.run(fbp_id)
+lct.set_volume(
+    numX=numX, numY=numY, numZ=numZ,
+    voxelWidth=voxelWidth, voxelHeight=voxelHeight,
+    offsetX=0.0, offsetY=0.0, offsetZ=0.0  # Set volume offset if needed
+)
 
-# Retrieve the reconstructed image
-reconstructed_image = astra.data2d.get(reconstruction_id)
+# Step 4: Allocate projections and reconstruction volume memory
+g = lct.allocate_projections()  # Projections array
+f = lct.allocate_volume()       # Reconstructed volume array
 
-# Visualize reconstructed image
-plt.imshow(reconstructed_image, cmap='gray')
-plt.title('Reconstructed Image (FBP with Ram-Lak)')
-plt.savefig("fbp_ram_lak_reconstruction.png")
+# Copy projection data into allocated array
+g[:] = projections_data
 
-# Cleanup
-astra.algorithm.delete(fbp_id)
-astra.data2d.delete(sinogram_id)
-astra.data2d.delete(reconstruction_id)
+# Step 5: Optional preprocessing (e.g., ring artifact removal)
+print("Removing ring artifacts...")
+ringRemoval(lct, g=g)
+
+# Step 6: Perform reconstruction using Filtered Back Projection (FBP)
+print("Performing reconstruction using FBP...")
+lct.FBP(g, f)
+
+# Step 7: Save or display reconstructed volume
+print("Displaying reconstructed volume...")
+napari.view_image(f, name='Reconstructed Volume', colormap='gray')
+
+# Optionally save the reconstructed volume
+reconstructed_volume = sitk.GetImageFromArray(f)
+sitk.WriteImage(reconstructed_volume, "reconstructed_volume.mhd")
+print("Reconstruction complete and saved to 'reconstructed_volume.mhd'.")

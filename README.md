@@ -1,6 +1,6 @@
 # README
 
-This README provides an overview of X-ray Computed Tomography (CT), reconstruction and [opengate](https://github.com/OpenGATE/opengate).
+This project implements X-ray Computed Tomography (CT) simulations using [opengate](https://github.com/OpenGATE/opengate), focusing on both parallel beam and cone beam geometries. The project demonstrates CT reconstruction techniques, particularly Filtered Back Projection (FBP) and FDK (Feldkamp-Davis-Kress) algorithms.
 
 Milestone 1, 2024.09.09 - 11.24.
 
@@ -8,15 +8,13 @@ Milestone 1, 2024.09.09 - 11.24.
 
 - [Contents](#contents)
 - [X-ray Computed Tomography (CT)](#x-ray-computed-tomography-ct)
-    - [Absorption Contrast Imaging](#absorption-contrast-imaging)
-    - [X-ray CT Geometries](#x-ray-ct-geometries)
-    - [General components](#general-components)
-    - [Illustration](#illustration)
+  - [Absorption Contrast Imaging](#absorption-contrast-imaging)
+  - [X-ray CT SourceGeometries](#x-ray-ct-source-geometries)
 - [Reconstruction](#reconstruction)
-    - [Filtered Back Projection (FBP)](#filtered-back-projection-fbp)
+  - [Filtered Back Projection (FBP)](#filtered-back-projection-fbp)
 - [opengate](#opengate)
-    - [Run and Timing](#run-and-timing)
-    - [Actors](#actors)
+  - [Run and Timing](#run-and-timing)
+  - [Actors](#actors)
 - [References](#references)
 
 ## X-ray Computed Tomography (CT)
@@ -42,8 +40,6 @@ Absorption contrast imaging observes differences in X-ray absorption within the 
 | Source             | Emits X-ray beams towards the phantom.                      |
 | Phantom            | The object being imaged.                                    |
 | Detector           | Captures the X-rays after passing through the object.       |
-
-### Illustration
 
 ![X-ray CT Source Geometries](media/x-ray_ct_geometries.png "X-ray CT Source Geometries")
 
@@ -80,9 +76,10 @@ FBP is a reconstruction technique used in CT to reconstruct a 2D image of an obj
 
 ### [Run and timing](https://opengate-python.readthedocs.io/en/master/user_guide/user_guide_reference_simulation.html#run-and-timing)
 
-The simulation can be split into several runs, each with a given time duration. This is used for example for simulations with a dynamic geometry, e.g. a rotating gantry or a breathing patient. Gaps between the intervals are allowed. 
+The simulation can be split into several runs, each with a given time duration. This is used for example for simulations with a dynamic geometry, e.g. a rotating gantry or a breathing patient. Gaps between the intervals are allowed.
 
 By default, the simulation has only one run with a duration of 1 second:
+
 ```python
 sim.run_timing_intervals = [[0, 1.0 * sec]]
 ```
@@ -92,6 +89,7 @@ sim.run_timing_intervals = [[0, 1.0 * sec]]
 Splitting a simulation into multiple runs is faster than executing a simulation multiple times.
 
 Let's define 3 runs with a gap from 1.0 to 1.5 seconds:
+
 ```python
 sim.run_timing_intervals = [
     [0, 0.5 * sec],         # 1st run

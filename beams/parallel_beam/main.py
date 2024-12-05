@@ -32,6 +32,7 @@ if __name__ == "__main__":
     vol = sim.add_volume("Box", "vol")
     vol.size = [10 * cm] * 3
     vol.material = "G4_WATER"
+    vol.translation = [0, 0, -5 * cm]
     vol.color = [0, 0.5, 1, 1]
 
     # Detector
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     # Source
     source = sim.add_source("GenericSource", "parallel_source")
     source.particle = "gamma"
-    source.activity = 1e6 * Bq
+    source.activity = 1e5 * Bq
     source.energy.mono = 80 * keV
     source.position.type = "box"
     source.position.size = [20 * cm, 1 * mm, 1 * mm]
@@ -70,11 +71,14 @@ if __name__ == "__main__":
     proj_actor.origin_as_image_center = True
     proj_actor.output_filename = 'output/projection.mhd'
 
-    angles = np.linspace(0, 180, n)  # Rotate from 0° to 180° over n runs
+    # Angles and translations
+    angles = np.linspace(0, 360, n)
     rotations = [Rotation.from_euler('z', angle, degrees=True).as_matrix() for angle in angles]
+    z_translations = np.linspace(vol.translation[2], 5 * cm, n)
+    translations = [[0, 0, z] for z in z_translations]
 
-    # Apply dynamic rotation to the "vol" volume
-    vol.add_dynamic_parametrisation(rotation=rotations)
+    # Attach the precomputed transformations to the volume
+    vol.add_dynamic_parametrisation(rotation=rotations, translation=translations)
 
     # Run the simulation
     sim.run()
