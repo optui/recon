@@ -1,18 +1,23 @@
 [project]
-name = "opengate-app"
+name = "recon"
 version = "0.1.0"
 description = "A simulation and visualization app using OpenGATE and DearPyGui."
 authors = [
-    {github = "optui"}
+    {name = "optui"}
 ]
-license = {text = "GNU"}
+license = {text = "LGPL3"}
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "opengate @ https://github.com/OpenGATE/opengate/archive/refs/tags/10.0.1.tar.gz",
-    "dearpygui @ https://github.com/hoffstadt/DearPyGui/archive/refs/tags/v1.11.0.tar.gz"
+    "dearpygui @ https://github.com/hoffstadt/DearPyGui/archive/refs/tags/v1.11.0.tar.gz",
+    "pyvista>=0.42.3",
+    "numpy",
+    "scipy"
 ]
 
+[tool.poetry.scripts]
+recon = "recon.main:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
